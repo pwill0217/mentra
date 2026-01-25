@@ -7,7 +7,7 @@ export default function LandingScreen() {
       <View style={styles.content}>
         <View style={styles.logoContainer}>
           <Text style={styles.logo}>💰</Text>
-          <Text style={styles.appName}>FinPath</Text>
+          <Text style={styles.appName}>Mentra</Text>
         </View>
 
         <Text style={styles.tagline}>

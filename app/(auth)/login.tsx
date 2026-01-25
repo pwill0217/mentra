@@ -1,14 +1,30 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../context/AuthContext'; // Changed this line
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
 
-  const handleLogin = () => {
-    console.log('Login:', email, password);
-    // We'll add Firebase auth later
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signIn(email, password);
+      // Navigation happens automatically via AuthContext
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert('Login Failed', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -24,6 +40,7 @@ export default function LoginScreen() {
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
+          editable={!loading}
         />
 
         <TextInput
@@ -32,16 +49,25 @@ export default function LoginScreen() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
+          editable={!loading}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Sign In</Text>
+        <TouchableOpacity 
+          style={[styles.button, loading && styles.buttonDisabled]} 
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Sign In</Text>
+          )}
         </TouchableOpacity>
 
         <Link href="/(auth)/signup" asChild>
-          <TouchableOpacity>
+          <TouchableOpacity disabled={loading}>
             <Text style={styles.linkText}>
-              `Dont have an account? <Text style={styles.linkBold}>Sign Up</Text>
+              Don&apos;t have an account? <Text style={styles.linkBold}>Sign Up</Text>
             </Text>
           </TouchableOpacity>
         </Link>
@@ -85,6 +111,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   buttonText: {
     color: '#fff',

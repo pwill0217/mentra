@@ -1,21 +1,44 @@
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
+
 
 export default function SignUpScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSignUp = () => {
-    console.log('SignUp:', name, email, password);
-    // We'll add Firebase auth later
-  };
+  const { signUp } = useAuth();
+
+const handleSignUp = async () => {
+  if (!name || !email || !password) {
+    Alert.alert('Error', 'Please fill in all fields');
+    return;
+  }
+
+  if (password.length < 6) {
+    Alert.alert('Error', 'Password must be at least 6 characters');
+    return;
+  }
+
+  setLoading(true);
+  try {
+    await signUp(email, password, name);
+    // Auth listener will handle navigation
+    router.replace('/(tabs)');
+  } catch (error: any) {
+    Alert.alert('Sign Up Failed', error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Create Account</Text>
-      <Text style={styles.subtitle}>Join FinPath today</Text>
+      <Text style={styles.subtitle}>Join Mentra today</Text>
 
       <View style={styles.form}>
         <TextInput
@@ -41,10 +64,20 @@ export default function SignUpScreen() {
           onChangeText={setPassword}
           secureTextEntry
         />
+        
 
-        <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-          <Text style={styles.buttonText}>Create Account</Text>
-        </TouchableOpacity>
+        <TouchableOpacity
+  style={[styles.button, loading && { opacity: 0.6 }]}
+  onPress={handleSignUp}
+  disabled={loading}
+>
+  {loading ? (
+    <ActivityIndicator color="#fff" />
+  ) : (
+    <Text style={styles.buttonText}>Create Account</Text>
+  )}
+</TouchableOpacity>
+
 
         <Link href="/(auth)/login" asChild>
           <TouchableOpacity>
@@ -52,9 +85,12 @@ export default function SignUpScreen() {
               Already have an account? <Text style={styles.linkBold}>Sign In</Text>
             </Text>
           </TouchableOpacity>
+          
         </Link>
       </View>
+      
     </View>
+    
   );
 }
 
